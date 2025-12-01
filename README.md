@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Receipt Split
 
-## Getting Started
+A simple app to split receipts with friends and share public links for them to see what they owe.
 
-First, run the development server:
+## Setup
+
+### 1. Environment Variables
+
+Create a `.env.local` file with:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+SUPABASE_SECRET_KEY=your_supabase_secret_key
+
+# Auth
+AUTH_PASSWORD=your_secure_password
+AUTH_SECRET=your_jwt_secret_at_least_32_characters_long
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Supabase Database
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run the SQL in `supabase-schema.sql` in your Supabase SQL Editor to create the tables.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Supabase Storage
 
-## Learn More
+1. Go to Supabase Dashboard → Storage
+2. Create a new bucket called `receipts`
+3. Set it to **Public** (so images can be viewed on public bill pages)
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Run the App
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Usage
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Go to `/login` and enter your password
+2. Click "Create New Receipt" to upload a receipt image
+3. Add people and the amounts they owe
+4. Generate a public link to share with friends
+5. Friends can view the bill at `/bill/[id]` without needing to log in

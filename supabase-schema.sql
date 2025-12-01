@@ -1,0 +1,34 @@
+-- Receipt Split App Database Schema
+-- Run this in your Supabase SQL Editor
+
+-- Receipts table
+CREATE TABLE receipts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  image_url TEXT,
+  notes TEXT NOT NULL,
+  date DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+-- Bill items table (people who owe money)
+CREATE TABLE bill_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  receipt_id UUID NOT NULL REFERENCES receipts(id) ON DELETE CASCADE,
+  person_name TEXT NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  paid BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Public links table (for shareable URLs)
+CREATE TABLE public_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  receipt_id UUID NOT NULL REFERENCES receipts(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(receipt_id) -- One public link per receipt
+);
+
+-- Create indexes for better query performance
+CREATE INDEX idx_bill_items_receipt_id ON bill_items(receipt_id);
+CREATE INDEX idx_public_links_receipt_id ON public_links(receipt_id);
+
