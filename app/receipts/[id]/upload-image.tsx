@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { uploadReceiptImage } from '@/app/actions/receipts'
+import { updateReceiptImage } from '@/app/actions/receipts'
+import { uploadImage } from '@/lib/upload'
 import { Button } from '@/components/ui/button'
 import { Upload, ImageIcon } from 'lucide-react'
 
@@ -14,6 +15,7 @@ export function UploadImage({ receiptId, hasExistingImage }: UploadImageProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [progress, setProgress] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   async function handleFileUpload(file: File) {
@@ -24,17 +26,26 @@ export function UploadImage({ receiptId, hasExistingImage }: UploadImageProps) {
 
     setError(null)
     setIsUploading(true)
+    setProgress('Getting upload URL...')
 
-    const formData = new FormData()
-    formData.append('image', file)
+    try {
+      // Upload directly to Supabase from client
+      setProgress('Uploading image...')
+      const { publicUrl } = await uploadImage(file)
 
-    const result = await uploadReceiptImage(receiptId, formData)
+      // Update the receipt record
+      setProgress('Saving...')
+      const result = await updateReceiptImage(receiptId, publicUrl)
 
-    if (result.error) {
-      setError(result.error)
+      if (result.error) {
+        setError(result.error)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setIsUploading(false)
+      setProgress(null)
     }
-
-    setIsUploading(false)
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -84,7 +95,7 @@ export function UploadImage({ receiptId, hasExistingImage }: UploadImageProps) {
               <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center animate-pulse">
                 <Upload className="w-5 h-5 text-amber-500" />
               </div>
-              <span className="text-sm">Uploading...</span>
+              <span className="text-sm">{progress || 'Uploading...'}</span>
             </>
           ) : (
             <>
@@ -112,4 +123,3 @@ export function UploadImage({ receiptId, hasExistingImage }: UploadImageProps) {
     </div>
   )
 }
-

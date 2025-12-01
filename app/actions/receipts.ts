@@ -47,13 +47,10 @@ export async function getReceipt(id: string) {
   return data
 }
 
-export async function createReceipt(formData: FormData) {
+export async function createReceipt(name: string, date: string, imageUrl: string | null) {
   await requireAuth()
   
   const supabase = createServerSupabaseClient()
-  const imageFile = formData.get('image') as File | null
-  const name = (formData.get('name') as string)?.trim()
-  const date = formData.get('date') as string
 
   if (!name) {
     return { error: 'Name is required' }
@@ -61,29 +58,6 @@ export async function createReceipt(formData: FormData) {
 
   if (!date) {
     return { error: 'Date is required' }
-  }
-
-  let imageUrl: string | null = null
-
-  // Upload image to Supabase Storage if provided
-  if (imageFile && imageFile.size > 0) {
-    const fileExt = imageFile.name.split('.').pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-    
-    const { error: uploadError } = await supabase.storage
-      .from('receipts')
-      .upload(fileName, imageFile)
-
-    if (uploadError) {
-      return { error: `Failed to upload image: ${uploadError.message}` }
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('receipts')
-      .getPublicUrl(fileName)
-    
-    imageUrl = publicUrl
   }
 
   // Create receipt record
@@ -97,7 +71,7 @@ export async function createReceipt(formData: FormData) {
     return { error: `Failed to create receipt: ${error.message}` }
   }
 
-  redirect(`/receipts/${data.id}`)
+  return { id: data.id }
 }
 
 export async function deleteReceipt(id: string) {
@@ -183,15 +157,10 @@ export async function toggleBillItemPaid(itemId: string, receiptId: string, paid
   return { success: true }
 }
 
-export async function uploadReceiptImage(receiptId: string, formData: FormData) {
+export async function updateReceiptImage(receiptId: string, imageUrl: string) {
   await requireAuth()
   
   const supabase = createServerSupabaseClient()
-  const imageFile = formData.get('image') as File
-
-  if (!imageFile || imageFile.size === 0) {
-    return { error: 'No image provided' }
-  }
 
   // Get current receipt to check for existing image
   const { data: receipt } = await supabase
@@ -207,27 +176,10 @@ export async function uploadReceiptImage(receiptId: string, formData: FormData) 
     await supabase.storage.from('receipts').remove([oldFileName])
   }
 
-  // Upload new image
-  const fileExt = imageFile.name.split('.').pop()
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-  
-  const { error: uploadError } = await supabase.storage
-    .from('receipts')
-    .upload(fileName, imageFile)
-
-  if (uploadError) {
-    return { error: `Failed to upload image: ${uploadError.message}` }
-  }
-
-  // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from('receipts')
-    .getPublicUrl(fileName)
-
-  // Update receipt record
+  // Update receipt record with new image URL
   const { error } = await supabase
     .from('receipts')
-    .update({ image_url: publicUrl })
+    .update({ image_url: imageUrl })
     .eq('id', receiptId)
 
   if (error) {

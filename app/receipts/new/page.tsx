@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createReceipt } from '@/app/actions/receipts'
+import { uploadImage } from '@/lib/upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,27 +13,24 @@ import { Label } from '@/components/ui/label'
 import { ArrowLeft, Upload, X, ImageIcon } from 'lucide-react'
 import { getTodayPST } from '@/lib/date'
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" disabled={pending}>
-      {pending ? 'Creating...' : 'Create Receipt'}
-    </Button>
-  )
-}
-
 export default function NewReceiptPage() {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [progress, setProgress] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function handleFileChange(file: File | null) {
     if (file) {
+      setSelectedFile(file)
       const reader = new FileReader()
       reader.onload = (e) => setPreview(e.target?.result as string)
       reader.readAsDataURL(file)
     } else {
+      setSelectedFile(null)
       setPreview(null)
     }
   }
@@ -51,11 +49,48 @@ export default function NewReceiptPage() {
     }
   }
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     setError(null)
-    const result = await createReceipt(formData)
-    if (result?.error) {
-      setError(result.error)
+    setIsSubmitting(true)
+
+    const formData = new FormData(e.currentTarget)
+    const name = (formData.get('name') as string)?.trim()
+    const date = formData.get('date') as string
+
+    if (!name) {
+      setError('Name is required')
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      let imageUrl: string | null = null
+
+      // Upload image if selected
+      if (selectedFile) {
+        setProgress('Uploading image...')
+        const result = await uploadImage(selectedFile)
+        imageUrl = result.publicUrl
+      }
+
+      // Create receipt
+      setProgress('Creating receipt...')
+      const result = await createReceipt(name, date, imageUrl)
+
+      if (result.error) {
+        setError(result.error)
+        setIsSubmitting(false)
+        setProgress(null)
+        return
+      }
+
+      // Redirect to the new receipt
+      router.push(`/receipts/${result.id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create receipt')
+      setIsSubmitting(false)
+      setProgress(null)
     }
   }
 
@@ -84,7 +119,7 @@ export default function NewReceiptPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name (Required) */}
               <div className="space-y-2">
                 <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
@@ -94,6 +129,7 @@ export default function NewReceiptPage() {
                   placeholder="e.g., Dinner at Joe's Pizza"
                   required
                   autoFocus
+                  disabled={isSubmitting}
                   className="border-stone-300 dark:border-stone-600"
                 />
               </div>
@@ -106,6 +142,7 @@ export default function NewReceiptPage() {
                   name="date"
                   type="date"
                   required
+                  disabled={isSubmitting}
                   defaultValue={getTodayPST()}
                   className="border-stone-300 dark:border-stone-600"
                 />
@@ -122,11 +159,12 @@ export default function NewReceiptPage() {
                       : 'border-stone-300 dark:border-stone-600 hover:border-amber-400 dark:hover:border-amber-500'
                     }
                     ${preview ? 'p-2' : 'p-8'}
+                    ${isSubmitting ? 'pointer-events-none opacity-50' : ''}
                   `}
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => !isSubmitting && fileInputRef.current?.click()}
                 >
                   <input
                     ref={fileInputRef}
@@ -134,6 +172,7 @@ export default function NewReceiptPage() {
                     name="image"
                     accept="image/*"
                     className="hidden"
+                    disabled={isSubmitting}
                     onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
                   />
                   
@@ -151,9 +190,10 @@ export default function NewReceiptPage() {
                         variant="secondary"
                         size="icon"
                         className="absolute top-2 right-2 rounded-full shadow-lg"
+                        disabled={isSubmitting}
                         onClick={(e) => {
                           e.stopPropagation()
-                          setPreview(null)
+                          handleFileChange(null)
                           if (fileInputRef.current) fileInputRef.current.value = ''
                         }}
                       >
@@ -171,7 +211,7 @@ export default function NewReceiptPage() {
                       </div>
                       <div className="text-center">
                         <p className="font-medium">Drag and drop or click to upload</p>
-                        <p className="text-sm text-stone-400">PNG, JPG, WEBP up to 10MB</p>
+                        <p className="text-sm text-stone-400">PNG, JPG, WEBP up to 50MB</p>
                       </div>
                     </div>
                   )}
@@ -184,7 +224,13 @@ export default function NewReceiptPage() {
                 </p>
               )}
 
-              <SubmitButton />
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (progress || 'Creating...') : 'Create Receipt'}
+              </Button>
             </form>
           </CardContent>
         </Card>
