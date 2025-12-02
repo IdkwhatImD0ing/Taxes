@@ -1,4 +1,4 @@
-// Client-side upload helper
+// Client-side upload helper - uploads through our API proxy
 
 export interface UploadResult {
   publicUrl: string
@@ -6,36 +6,18 @@ export interface UploadResult {
 }
 
 export async function uploadImage(file: File): Promise<UploadResult> {
-  // 1. Get signed upload URL from our API
+  const formData = new FormData()
+  formData.append('file', file)
+
   const response = await fetch('/api/upload', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      filename: file.name,
-      contentType: file.type,
-    }),
+    body: formData,
   })
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(error.error || 'Failed to get upload URL')
+    throw new Error(error.error || 'Failed to upload')
   }
 
-  const { signedUrl, token, path, publicUrl } = await response.json()
-
-  // 2. Upload directly to Supabase Storage
-  const uploadResponse = await fetch(signedUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': file.type,
-    },
-    body: file,
-  })
-
-  if (!uploadResponse.ok) {
-    throw new Error('Failed to upload file')
-  }
-
-  return { publicUrl, path }
+  return response.json()
 }
-

@@ -19,7 +19,7 @@ async function verifyAuth(request: NextRequest): Promise<boolean> {
   }
 }
 
-// Generate signed upload URL
+// Handle file upload directly through API route
 export async function POST(request: NextRequest) {
   // Verify authentication
   if (!(await verifyAuth(request))) {
@@ -27,40 +27,50 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { filename, contentType } = await request.json()
+    const formData = await request.formData()
+    const file = formData.get('file') as File
     
-    if (!filename || !contentType) {
-      return NextResponse.json({ error: 'Missing filename or contentType' }, { status: 400 })
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
     const supabase = createServerSupabaseClient()
     
     // Generate unique filename
-    const fileExt = filename.split('.').pop()
+    const fileExt = file.name.split('.').pop()
     const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
-    // Create signed upload URL (valid for 60 seconds)
-    const { data, error } = await supabase.storage
-      .from('receipts')
-      .createSignedUploadUrl(uniqueFilename)
+    // Convert File to ArrayBuffer for upload
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = new Uint8Array(arrayBuffer)
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    // Upload directly from server
+    const { error: uploadError } = await supabase.storage
+      .from('receipts')
+      .upload(uniqueFilename, buffer, {
+        contentType: file.type,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError.message }, { status: 500 })
     }
 
-    // Get the public URL for after upload
+    // Get the public URL
     const { data: { publicUrl } } = supabase.storage
       .from('receipts')
       .getPublicUrl(uniqueFilename)
 
-    return NextResponse.json({
-      signedUrl: data.signedUrl,
-      token: data.token,
-      path: uniqueFilename,
-      publicUrl,
-    })
+    return NextResponse.json({ publicUrl, path: uniqueFilename })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create upload URL' }, { status: 500 })
+    console.error('Upload error:', error)
+    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
   }
 }
 
+// Configure body size limit for this route
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
