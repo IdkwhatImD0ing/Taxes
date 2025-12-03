@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { getPublicBill } from '@/app/actions/receipts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Receipt, Check } from 'lucide-react'
+import { Receipt, Check, StickyNote } from 'lucide-react'
 import { formatDatePST } from '@/lib/date'
 import type { Metadata } from 'next'
 
@@ -162,6 +162,27 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
               )}
             </CardContent>
           </Card>
+
+          {/* Notes */}
+          {receipt.notes && (
+            <Card className="border-stone-200/60 dark:border-stone-700/60 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 shadow-lg overflow-hidden">
+              <CardContent className="pt-5">
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400/20 to-orange-400/20 dark:from-amber-500/20 dark:to-orange-500/20 flex items-center justify-center">
+                      <StickyNote className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-1">Notes</p>
+                    <p className="text-stone-600 dark:text-stone-300 whitespace-pre-wrap leading-relaxed">
+                      {receipt.notes}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Receipt Image */}
           {receipt.image_url && (

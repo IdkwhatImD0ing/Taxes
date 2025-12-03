@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Receipt } from 'lucide-react'
 import { AddBillItemForm } from './add-bill-item-form'
-import { PublicLinkSection } from './public-link-section'
+import { ShareButton } from './share-button'
 import { DeleteReceiptButton } from './delete-receipt-button'
 import { DeleteBillItemButton } from './delete-bill-item-button'
 import { EditDate } from './edit-date'
@@ -85,7 +85,10 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
             </div>
           </div>
           
-          <DeleteReceiptButton receiptId={id} />
+          <div className="flex items-center gap-2">
+            <ShareButton receiptId={id} existingLinkId={publicLinkId} />
+            <DeleteReceiptButton receiptId={id} />
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -94,7 +97,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Receipt Image</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               {receipt.image_url && (
                 <div className="relative rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800">
                   <Image
@@ -111,7 +114,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
           </Card>
 
           {/* Bill Items */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <Card className="border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-lg">Who Owes What</CardTitle>
@@ -171,9 +174,6 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
 
             {/* Notes */}
             <EditNotes receiptId={id} currentNotes={receipt.notes} />
-
-            {/* Public Link */}
-            <PublicLinkSection receiptId={id} existingLinkId={publicLinkId} />
 
             {/* JSON Upload */}
             <JsonUpload receiptId={id} />

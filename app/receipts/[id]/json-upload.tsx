@@ -3,8 +3,7 @@
 import { useState, useRef } from 'react'
 import { bulkAddBillItems } from '@/app/actions/receipts'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Upload, FileJson, Check, ClipboardPaste, Copy } from 'lucide-react'
+import { Upload, FileJson, Check, ClipboardPaste, Copy, ChevronDown } from 'lucide-react'
 
 interface JsonUploadProps {
   receiptId: string
@@ -16,6 +15,7 @@ const EXAMPLE_JSON = `[
 ]`
 
 export function JsonUpload({ receiptId }: JsonUploadProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -119,139 +119,151 @@ export function JsonUpload({ receiptId }: JsonUploadProps) {
   }
 
   return (
-    <Card className="border-stone-200/60 dark:border-stone-700/60 bg-white/60 dark:bg-stone-900/60">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <FileJson className="w-5 h-5 text-amber-500" />
-          Bulk Import
-        </CardTitle>
-        <CardDescription>
-          Upload a JSON file or paste JSON data to add multiple people at once
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* File Upload */}
-        <div className="relative">
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFileUpload}
-            disabled={isProcessing}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-          />
-          <Button 
-            variant="outline" 
-            className="w-full border-dashed"
-            disabled={isProcessing}
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            {isProcessing ? 'Processing...' : 'Upload JSON File'}
-          </Button>
+    <div className="border border-stone-200/60 dark:border-stone-700/60 bg-white/60 dark:bg-stone-900/60 rounded-xl overflow-hidden">
+      {/* Collapsible Header */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <FileJson className="w-4 h-4 text-amber-500" />
+          <span className="text-sm font-medium text-stone-700 dark:text-stone-300">Bulk Import</span>
+          <span className="text-xs text-stone-400 dark:text-stone-500">JSON</span>
         </div>
+        <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
 
-        {/* Divider */}
-        <div className="flex items-center gap-2 py-1">
-          <div className="flex-1 h-px bg-stone-200 dark:bg-stone-700" />
-          <span className="text-xs text-stone-400 dark:text-stone-500">or</span>
-          <div className="flex-1 h-px bg-stone-200 dark:bg-stone-700" />
-        </div>
+      {/* Expandable Content */}
+      {isExpanded && (
+        <div className="px-4 pb-4 space-y-3 border-t border-stone-200/60 dark:border-stone-700/60">
+          <p className="text-xs text-stone-500 dark:text-stone-400 pt-3">
+            Upload a JSON file or paste data to add multiple people at once
+          </p>
 
-        {/* Paste Toggle */}
-        {!showPasteArea ? (
-          <Button 
-            variant="outline" 
-            className="w-full"
-            disabled={isProcessing}
-            onClick={() => setShowPasteArea(true)}
-          >
-            <ClipboardPaste className="w-4 h-4 mr-2" />
-            Paste JSON Data
-          </Button>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                Paste your JSON:
-              </label>
+          {/* File Upload */}
+          <div className="relative">
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={handleFileUpload}
+              disabled={isProcessing}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full border-dashed"
+              disabled={isProcessing}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              {isProcessing ? 'Processing...' : 'Upload JSON File'}
+            </Button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-stone-200 dark:bg-stone-700" />
+            <span className="text-xs text-stone-400 dark:text-stone-500">or</span>
+            <div className="flex-1 h-px bg-stone-200 dark:bg-stone-700" />
+          </div>
+
+          {/* Paste Toggle */}
+          {!showPasteArea ? (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full"
+              disabled={isProcessing}
+              onClick={() => setShowPasteArea(true)}
+            >
+              <ClipboardPaste className="w-4 h-4 mr-2" />
+              Paste JSON Data
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-stone-700 dark:text-stone-300">
+                  Paste your JSON:
+                </label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={handlePasteFromClipboard}
+                  disabled={isProcessing}
+                >
+                  <ClipboardPaste className="w-3 h-3 mr-1" />
+                  Paste
+                </Button>
+              </div>
+              <textarea
+                ref={textareaRef}
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder={EXAMPLE_JSON}
+                disabled={isProcessing}
+                className="w-full h-24 px-3 py-2 text-xs font-mono bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={handlePasteSubmit}
+                  size="sm"
+                  disabled={isProcessing || !pasteText.trim()}
+                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                >
+                  {isProcessing ? 'Processing...' : 'Import'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowPasteArea(false)
+                    setPasteText('')
+                    setError(null)
+                  }}
+                  disabled={isProcessing}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-3 py-2 rounded-md">
+              {error}
+            </p>
+          )}
+
+          {success && (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-md flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              {success}
+            </p>
+          )}
+
+          {/* Expected Format Example */}
+          <details className="text-xs text-stone-400 dark:text-stone-500">
+            <summary className="cursor-pointer hover:text-stone-600 dark:hover:text-stone-300 flex items-center gap-1">
+              <span>Expected format</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs"
-                onClick={handlePasteFromClipboard}
-                disabled={isProcessing}
+                className="h-5 text-[10px] px-1.5 hover:text-amber-600 ml-auto"
+                onClick={(e) => { e.preventDefault(); copyExample() }}
+                title="Copy example"
               >
-                <ClipboardPaste className="w-3 h-3 mr-1" />
-                Paste from clipboard
+                <Copy className="w-3 h-3 mr-1" />
+                Copy
               </Button>
-            </div>
-            <textarea
-              ref={textareaRef}
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder={EXAMPLE_JSON}
-              disabled={isProcessing}
-              className="w-full h-32 px-3 py-2 text-sm font-mono bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50"
-            />
-            <div className="flex gap-2">
-              <Button
-                onClick={handlePasteSubmit}
-                disabled={isProcessing || !pasteText.trim()}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              >
-                {isProcessing ? 'Processing...' : 'Import'}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setShowPasteArea(false)
-                  setPasteText('')
-                  setError(null)
-                }}
-                disabled={isProcessing}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-3 py-2 rounded-md">
-            {error}
-          </p>
-        )}
-
-        {success && (
-          <p className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-md flex items-center gap-2">
-            <Check className="w-4 h-4" />
-            {success}
-          </p>
-        )}
-
-        {/* Expected Format Example */}
-        <div className="text-xs text-stone-400 dark:text-stone-500 space-y-1">
-          <div className="flex items-center justify-between">
-            <p className="font-medium">Expected format:</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-xs px-2 hover:text-amber-600"
-              onClick={copyExample}
-              title="Copy example"
-            >
-              <Copy className="w-3 h-3 mr-1" />
-              Copy
-            </Button>
-          </div>
-          <pre className="bg-stone-100 dark:bg-stone-800 p-2 rounded text-[10px] overflow-x-auto">
+            </summary>
+            <pre className="bg-stone-100 dark:bg-stone-800 p-2 rounded text-[10px] overflow-x-auto mt-2">
 {EXAMPLE_JSON}
-          </pre>
-          <p className="text-[10px] mt-1 text-stone-400">
-            Also accepts: <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">person_name</code>, <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">person</code> for name; <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">value</code>, <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">total</code> for amount
-          </p>
+            </pre>
+          </details>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   )
 }
 

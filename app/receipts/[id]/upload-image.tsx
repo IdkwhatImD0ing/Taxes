@@ -65,6 +65,62 @@ export function UploadImage({ receiptId, hasExistingImage }: UploadImageProps) {
     e.target.value = ''
   }
 
+  // Compact horizontal layout when there's an existing image
+  if (hasExistingImage) {
+    return (
+      <div className="space-y-2">
+        <div
+          className={`
+            relative border-2 border-dashed rounded-lg transition-all cursor-pointer px-4 py-2
+            ${isDragging 
+              ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/20' 
+              : 'border-stone-300 dark:border-stone-600 hover:border-amber-400 dark:hover:border-amber-500'
+            }
+          `}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleInputChange}
+            disabled={isUploading}
+          />
+          
+          <div className="flex items-center justify-center gap-3 text-stone-500">
+            {isUploading ? (
+              <>
+                <Upload className="w-4 h-4 text-amber-500 animate-pulse" />
+                <span className="text-sm">{progress || 'Uploading...'}</span>
+              </>
+            ) : (
+              <>
+                {isDragging ? (
+                  <Upload className="w-4 h-4 text-amber-500" />
+                ) : (
+                  <ImageIcon className="w-4 h-4" />
+                )}
+                <span className="text-sm font-medium">Replace image</span>
+                <span className="text-xs text-stone-400">or drag & drop</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-3 py-2 rounded-md">
+            {error}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // Full upload area when no image exists
   return (
     <div className="space-y-2">
       <div
@@ -106,9 +162,7 @@ export function UploadImage({ receiptId, hasExistingImage }: UploadImageProps) {
                   <ImageIcon className="w-5 h-5" />
                 )}
               </div>
-              <span className="text-sm font-medium">
-                {hasExistingImage ? 'Replace image' : 'Upload receipt image'}
-              </span>
+              <span className="text-sm font-medium">Upload receipt image</span>
               <span className="text-xs text-stone-400">Click or drag & drop</span>
             </>
           )}

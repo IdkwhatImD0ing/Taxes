@@ -20,7 +20,7 @@ export async function getReceipts() {
     .from('receipts')
     .select(`
       *,
-      bill_items (id, person_name, amount),
+      bill_items (id, person_name, amount, paid),
       public_links (id)
     `)
     .order('date', { ascending: false })
@@ -37,7 +37,7 @@ export async function getReceipt(id: string) {
     .from('receipts')
     .select(`
       *,
-      bill_items (id, person_name, amount),
+      bill_items (id, person_name, amount, paid),
       public_links (id)
     `)
     .eq('id', id)
@@ -303,7 +303,7 @@ export async function getPublicBill(linkId: string) {
     .from('receipts')
     .select(`
       *,
-      bill_items (id, person_name, amount)
+      bill_items (id, person_name, amount, paid)
     `)
     .eq('id', link.receipt_id)
     .single()
