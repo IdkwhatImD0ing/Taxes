@@ -66,3 +66,38 @@ You can add multiple people at once using the Bulk Import feature on any receipt
 ```
 
 **Flexible field names:** The importer also accepts `person_name` or `person` for names, and `value` or `total` for amounts.
+
+## Design System
+
+Receipt Split uses a warm, receipt-paper inspired color palette that balances friendliness with financial trustworthiness.
+
+### Color Philosophy
+
+| Purpose | Reasoning |
+|---------|-----------|
+| **Warm Terracotta/Amber** | Bill splitting is social - warm tones feel friendly and inviting |
+| **Paper-like backgrounds** | Evokes the familiar feel of physical receipts |
+| **Emerald for "Paid"** | Universal success/positive color for completed payments |
+| **Red only for errors** | Reserved exclusively for destructive actions to avoid financial anxiety |
+
+### Brand Colors (CSS Variables)
+
+```css
+/* Light Mode */
+--brand-400: oklch(0.72 0.14 55);  /* Primary amber-terracotta */
+--brand-500: oklch(0.62 0.15 50);  /* Main brand color */
+--brand-600: oklch(0.55 0.14 45);  /* Darker accent */
+
+/* Semantic */
+--success: oklch(0.65 0.16 155);   /* Paid/completed states */
+--destructive: oklch(0.55 0.2 25); /* Errors only */
+```
+
+### Utility Classes
+
+| Class | Purpose |
+|-------|---------|
+| `.bg-receipt-pattern` | Subtle radial gradient background |
+| `.text-gradient-brand` | Gradient text for headings |
+| `.btn-brand` | Primary action button styling |
+| `.card-receipt` | Card with subtle shadow and backdrop blur |

@@ -4,6 +4,7 @@ import { getPublicBill } from '@/app/actions/receipts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Receipt, Check, StickyNote } from 'lucide-react'
 import { formatDatePST } from '@/lib/date'
+import { CopyZelleButton } from './copy-zelle-button'
 import type { Metadata } from 'next'
 
 interface PublicBillPageProps {
@@ -81,26 +82,26 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
   const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-orange-100 dark:from-stone-950 dark:via-stone-900 dark:to-stone-800">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(251,191,36,0.1),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(249,115,22,0.08),transparent_50%)]" />
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-brand-100/50 dark:from-background dark:via-brand-50/5 dark:to-background">
+      <div className="absolute inset-0 bg-receipt-pattern" />
       
       <div className="relative z-10 container mx-auto py-8 px-4 max-w-2xl">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mb-4 shadow-lg">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center mb-4 shadow-lg shadow-brand-500/25">
             <span className="text-3xl">🧾</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-stone-800 to-stone-600 dark:from-stone-100 dark:to-stone-300 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight text-gradient-brand">
             {receipt.name || 'Bill Split'}
           </h1>
-          <p className="text-stone-500 dark:text-stone-400 mt-2">
+          <p className="text-muted-foreground mt-2">
             {formatDatePST(receipt.date)}
           </p>
         </div>
 
         <div className="space-y-6">
           {/* Bill Items */}
-          <Card className="border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 shadow-xl">
+          <Card className="card-receipt">
             <CardHeader>
               <CardTitle className="text-lg text-center">Who Owes What</CardTitle>
             </CardHeader>
@@ -110,22 +111,22 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
                   {receipt.bill_items.map((item: { id: string; person_name: string; amount: number; paid: boolean }) => (
                     <div
                       key={item.id}
-                      className={`flex items-center justify-between py-3 px-4 rounded-xl border transition-colors ${
+                      className={`flex items-center justify-between py-3.5 px-4 rounded-xl border transition-colors ${
                         item.paid
-                          ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200/50 dark:border-emerald-700/30'
-                          : 'bg-gradient-to-r from-stone-50 to-amber-50/30 dark:from-stone-800/50 dark:to-amber-900/10 border-stone-200/50 dark:border-stone-700/50'
+                          ? 'bg-gradient-to-r from-success/10 to-success/5 border-success/20'
+                          : 'bg-gradient-to-r from-muted/50 to-brand-50/30 dark:from-muted/30 dark:to-brand-50/5 border-border/50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         {item.paid && (
-                          <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-                            <Check className="w-4 h-4 text-white" />
+                          <div className="w-6 h-6 rounded-full bg-success flex items-center justify-center">
+                            <Check className="w-4 h-4 text-success-foreground" />
                           </div>
                         )}
                         <span className={`font-medium text-lg ${
                           item.paid 
-                            ? 'text-emerald-700 dark:text-emerald-300 line-through' 
-                            : 'text-stone-700 dark:text-stone-200'
+                            ? 'text-success line-through' 
+                            : 'text-foreground'
                         }`}>
                           {item.person_name}
                         </span>
@@ -133,13 +134,13 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
                       <div className="flex items-center gap-2">
                         <span className={`text-xl font-bold ${
                           item.paid 
-                            ? 'text-emerald-600 dark:text-emerald-400' 
-                            : 'text-amber-600 dark:text-amber-400'
+                            ? 'text-success' 
+                            : 'text-brand-600 dark:text-brand-400'
                         }`}>
                           ${item.amount.toFixed(2)}
                         </span>
                         {item.paid && (
-                          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-medium text-success bg-success/15 px-2 py-0.5 rounded-full">
                             PAID
                           </span>
                         )}
@@ -147,35 +148,59 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
                     </div>
                   ))}
                   
-                  <div className="flex items-center justify-between pt-4 mt-4 border-t-2 border-amber-300/50 dark:border-amber-600/30">
-                    <span className="font-bold text-stone-600 dark:text-stone-300 text-lg">Total</span>
-                    <span className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                  <div className="flex items-center justify-between pt-4 mt-4 border-t-2 border-brand-200/50 dark:border-brand-400/20">
+                    <span className="font-bold text-muted-foreground text-lg">Total</span>
+                    <span className="text-3xl font-bold text-gradient-brand">
                       ${totalAmount.toFixed(2)}
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Receipt className="w-12 h-12 text-stone-300 dark:text-stone-600 mb-4" />
-                  <p className="text-stone-500 dark:text-stone-400">No items in this bill yet</p>
+                  <Receipt className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground">No items in this bill yet</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
+          {/* Payment Info - Zelle */}
+          <Card className="card-receipt border-[#6D1ED4]/20 dark:border-[#6D1ED4]/30 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#6D1ED4]/5 to-transparent dark:from-[#6D1ED4]/10" />
+            <CardHeader className="relative pb-2">
+              <CardTitle className="text-lg text-center flex items-center justify-center gap-2">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#6D1ED4">
+                  <path d="M13.559 24h-2.841a.483.483 0 0 1-.483-.483v-2.765H5.638a.667.667 0 0 1-.666-.666v-2.235a.67.67 0 0 1 .142-.412l8.139-10.382h-7.16a.667.667 0 0 1-.666-.667V4.155a.667.667 0 0 1 .666-.666h4.362V.483A.483.483 0 0 1 10.938 0h2.842a.483.483 0 0 1 .483.483v3.006h4.098a.667.667 0 0 1 .666.666v2.235a.67.67 0 0 1-.142.412l-8.139 10.382h7.616a.667.667 0 0 1 .666.667v2.235a.667.667 0 0 1-.666.666h-4.32v2.765a.483.483 0 0 1-.483.483z"/>
+                </svg>
+                <span>Pay with Zelle</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-sm text-muted-foreground text-center">
+                  Send payment to this phone number
+                </p>
+                <CopyZelleButton zelleNumber="4085858267" />
+                <p className="text-xs text-muted-foreground/70 text-center">
+                  Tap to copy • Include your name in the memo
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Notes */}
           {receipt.notes && (
-            <Card className="border-stone-200/60 dark:border-stone-700/60 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 shadow-lg overflow-hidden">
+            <Card className="border-brand-200/50 dark:border-brand-400/20 bg-gradient-to-br from-brand-50/80 to-brand-100/40 dark:from-brand-50/5 dark:to-brand-100/5 shadow-lg overflow-hidden">
               <CardContent className="pt-5">
                 <div className="flex gap-3">
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400/20 to-orange-400/20 dark:from-amber-500/20 dark:to-orange-500/20 flex items-center justify-center">
-                      <StickyNote className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-200/50 to-brand-300/30 dark:from-brand-400/20 dark:to-brand-500/10 flex items-center justify-center">
+                      <StickyNote className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-1">Notes</p>
-                    <p className="text-stone-600 dark:text-stone-300 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm font-medium text-brand-700 dark:text-brand-300 mb-1">Notes</p>
+                    <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">
                       {receipt.notes}
                     </p>
                   </div>
@@ -186,12 +211,12 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
 
           {/* Receipt Image */}
           {receipt.image_url && (
-            <Card className="border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 shadow-xl overflow-hidden">
+            <Card className="card-receipt overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-lg text-center">Receipt</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800">
+                <div className="relative rounded-xl overflow-hidden bg-muted">
                   <Image
                     src={receipt.image_url}
                     alt="Receipt"
@@ -205,12 +230,11 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
           )}
 
           {/* Footer */}
-          <p className="text-center text-sm text-stone-400 dark:text-stone-500 pt-4">
-            Shared via Receipt Split
+          <p className="text-center text-sm text-muted-foreground pt-4">
+            Shared via <span className="font-medium text-brand-600 dark:text-brand-400">Receipt Split</span>
           </p>
         </div>
       </div>
     </div>
   )
 }
-

@@ -96,23 +96,23 @@ export default function NewReceiptPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-orange-100 dark:from-stone-950 dark:via-stone-900 dark:to-stone-800">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(251,191,36,0.1),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(249,115,22,0.08),transparent_50%)]" />
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-brand-100/50 dark:from-background dark:via-brand-50/5 dark:to-background">
+      <div className="absolute inset-0 bg-receipt-pattern" />
       
       <div className="relative z-10 container mx-auto py-8 px-4 max-w-2xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full hover:bg-brand-100 dark:hover:bg-brand-50/10">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-stone-800 to-stone-600 dark:from-stone-100 dark:to-stone-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold tracking-tight text-gradient-brand">
             New Receipt
           </h1>
         </div>
 
-        <Card className="border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 shadow-xl">
+        <Card className="card-receipt">
           <CardHeader>
             <CardTitle>Create Receipt</CardTitle>
             <CardDescription>
@@ -123,7 +123,7 @@ export default function NewReceiptPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name (Required) */}
               <div className="space-y-2">
-                <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="name">Name <span className="text-destructive">*</span></Label>
                 <Input
                   id="name"
                   name="name"
@@ -131,13 +131,13 @@ export default function NewReceiptPage() {
                   required
                   autoFocus
                   disabled={isSubmitting}
-                  className="border-stone-300 dark:border-stone-600"
+                  className="border-border focus:border-brand-400 focus:ring-brand-400/20"
                 />
               </div>
 
               {/* Date (Required) */}
               <div className="space-y-2">
-                <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
+                <Label htmlFor="date">Date <span className="text-destructive">*</span></Label>
                 <Input
                   id="date"
                   name="date"
@@ -145,32 +145,32 @@ export default function NewReceiptPage() {
                   required
                   disabled={isSubmitting}
                   defaultValue={getTodayPST()}
-                  className="border-stone-300 dark:border-stone-600"
+                  className="border-border focus:border-brand-400 focus:ring-brand-400/20"
                 />
               </div>
 
               {/* Notes (Optional) */}
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes <span className="text-stone-400 text-sm font-normal">(optional)</span></Label>
+                <Label htmlFor="notes">Notes <span className="text-muted-foreground text-sm font-normal">(optional)</span></Label>
                 <textarea
                   id="notes"
                   name="notes"
                   placeholder="Add any additional notes about this receipt..."
                   rows={3}
                   disabled={isSubmitting}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50 resize-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-400 disabled:opacity-50 resize-none transition-colors"
                 />
               </div>
 
               {/* Image Upload (Optional) */}
               <div className="space-y-2">
-                <Label>Receipt Image <span className="text-stone-400 text-sm font-normal">(optional)</span></Label>
+                <Label>Receipt Image <span className="text-muted-foreground text-sm font-normal">(optional)</span></Label>
                 <div
                   className={`
-                    relative border-2 border-dashed rounded-lg transition-all cursor-pointer
+                    relative border-2 border-dashed rounded-xl transition-all cursor-pointer
                     ${isDragging 
-                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/20' 
-                      : 'border-stone-300 dark:border-stone-600 hover:border-amber-400 dark:hover:border-amber-500'
+                      ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' 
+                      : 'border-border hover:border-brand-400 dark:hover:border-brand-400/50'
                     }
                     ${preview ? 'p-2' : 'p-8'}
                     ${isSubmitting ? 'pointer-events-none opacity-50' : ''}
@@ -197,7 +197,7 @@ export default function NewReceiptPage() {
                         alt="Receipt preview"
                         width={600}
                         height={800}
-                        className="w-full h-auto max-h-96 object-contain rounded"
+                        className="w-full h-auto max-h-96 object-contain rounded-lg"
                       />
                       <Button
                         type="button"
@@ -215,17 +215,17 @@ export default function NewReceiptPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-3 text-stone-500">
-                      <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
                         {isDragging ? (
-                          <Upload className="w-8 h-8 text-amber-500" />
+                          <Upload className="w-8 h-8 text-brand-500" />
                         ) : (
                           <ImageIcon className="w-8 h-8" />
                         )}
                       </div>
                       <div className="text-center">
                         <p className="font-medium">Drag and drop or click to upload</p>
-                        <p className="text-sm text-stone-400">PNG, JPG, WEBP up to 50MB</p>
+                        <p className="text-sm text-muted-foreground/70">PNG, JPG, WEBP up to 50MB</p>
                       </div>
                     </div>
                   )}
@@ -233,14 +233,14 @@ export default function NewReceiptPage() {
               </div>
 
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-3 py-2 rounded-md">
+                <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
                   {error}
                 </p>
               )}
 
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" 
+                className="w-full btn-brand" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (progress || 'Creating...') : 'Create Receipt'}
