@@ -57,6 +57,7 @@ export default function NewReceiptPage() {
     const formData = new FormData(e.currentTarget)
     const name = (formData.get('name') as string)?.trim()
     const date = formData.get('date') as string
+    const notes = (formData.get('notes') as string)?.trim()
 
     if (!name) {
       setError('Name is required')
@@ -76,7 +77,7 @@ export default function NewReceiptPage() {
 
       // Create receipt
       setProgress('Creating receipt...')
-      const result = await createReceipt(name, date, imageUrl)
+      const result = await createReceipt(name, date, imageUrl, notes || undefined)
 
       if (result.error) {
         setError(result.error)
@@ -145,6 +146,19 @@ export default function NewReceiptPage() {
                   disabled={isSubmitting}
                   defaultValue={getTodayPST()}
                   className="border-stone-300 dark:border-stone-600"
+                />
+              </div>
+
+              {/* Notes (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes <span className="text-stone-400 text-sm font-normal">(optional)</span></Label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  placeholder="Add any additional notes about this receipt..."
+                  rows={3}
+                  disabled={isSubmitting}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50 resize-none"
                 />
               </div>
 

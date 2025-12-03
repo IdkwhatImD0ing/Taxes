@@ -67,10 +67,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
   }
 }
-
-// Configure body size limit for this route
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}

@@ -5,6 +5,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Receipt, ExternalLink, LogOut } from 'lucide-react'
 import { formatDateShortPST } from '@/lib/date'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  description: 'Manage your receipts and bill splits in one place.',
+  robots: {
+    index: false, // This is a private dashboard
+    follow: false,
+  },
+}
 
 export default async function Dashboard() {
   const receipts = await getReceipts()
@@ -68,7 +78,7 @@ export default async function Dashboard() {
                       <div className="flex items-start justify-between">
                         <div>
                           <CardTitle className="text-lg text-stone-800 dark:text-stone-100">
-                            {receipt.notes || 'Untitled Receipt'}
+                            {receipt.name || 'Untitled Receipt'}
                           </CardTitle>
                           <CardDescription className="text-stone-500 dark:text-stone-400">
                             {formatDateShortPST(receipt.date)}

@@ -10,12 +10,45 @@ import { PublicLinkSection } from './public-link-section'
 import { DeleteReceiptButton } from './delete-receipt-button'
 import { DeleteBillItemButton } from './delete-bill-item-button'
 import { EditDate } from './edit-date'
+import { EditNotes } from './edit-notes'
 import { JsonUpload } from './json-upload'
 import { TogglePaid } from './toggle-paid'
 import { UploadImage } from './upload-image'
+import { formatDatePST } from '@/lib/date'
+import type { Metadata } from 'next'
 
 interface ReceiptPageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata(
+  { params }: ReceiptPageProps
+): Promise<Metadata> {
+  const { id } = await params
+  
+  try {
+    const receipt = await getReceipt(id)
+    const title = receipt.name || 'Receipt Details'
+    const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
+    const peopleCount = receipt.bill_items?.length || 0
+    const formattedDate = formatDatePST(receipt.date)
+    
+    const description = `Managing ${title} - $${totalAmount.toFixed(2)} split between ${peopleCount} ${peopleCount === 1 ? 'person' : 'people'} on ${formattedDate}`
+    
+    return {
+      title,
+      description,
+      robots: {
+        index: false, // This is a private page, don't index
+        follow: false,
+      },
+    }
+  } catch {
+    return {
+      title: 'Receipt Not Found',
+      description: 'This receipt could not be found.',
+    }
+  }
 }
 
 export default async function ReceiptPage({ params }: ReceiptPageProps) {
@@ -46,7 +79,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
             </Link>
             <div>
               <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-stone-800 to-stone-600 dark:from-stone-100 dark:to-stone-300 bg-clip-text text-transparent">
-                {receipt.notes || 'Receipt Details'}
+                {receipt.name || 'Receipt Details'}
               </h1>
               <EditDate receiptId={id} currentDate={receipt.date} />
             </div>
@@ -135,6 +168,9 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
                 )}
               </CardContent>
             </Card>
+
+            {/* Notes */}
+            <EditNotes receiptId={id} currentNotes={receipt.notes} />
 
             {/* Public Link */}
             <PublicLinkSection receiptId={id} existingLinkId={publicLinkId} />

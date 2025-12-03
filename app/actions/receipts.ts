@@ -47,7 +47,7 @@ export async function getReceipt(id: string) {
   return data
 }
 
-export async function createReceipt(name: string, date: string, imageUrl: string | null) {
+export async function createReceipt(name: string, date: string, imageUrl: string | null, notes?: string) {
   await requireAuth()
   
   const supabase = createServerSupabaseClient()
@@ -63,7 +63,7 @@ export async function createReceipt(name: string, date: string, imageUrl: string
   // Create receipt record
   const { data, error } = await supabase
     .from('receipts')
-    .insert({ image_url: imageUrl, notes: name, date })
+    .insert({ image_url: imageUrl, name, date, notes: notes || null })
     .select()
     .single()
 
@@ -206,6 +206,23 @@ export async function updateReceiptDate(receiptId: string, date: string) {
   revalidatePath(`/receipts/${receiptId}`)
   return { success: true }
 }
+
+export async function updateReceiptNotes(receiptId: string, notes: string) {
+  await requireAuth()
+  
+  const supabase = createServerSupabaseClient()
+  const { error } = await supabase
+    .from('receipts')
+    .update({ notes: notes || null })
+    .eq('id', receiptId)
+
+  if (error) {
+    return { error: `Failed to update notes: ${error.message}` }
+  }
+  
+  revalidatePath(`/receipts/${receiptId}`)
+  return { success: true }
+} 
 
 export async function bulkAddBillItems(
   receiptId: string, 

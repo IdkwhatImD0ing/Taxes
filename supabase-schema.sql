@@ -6,8 +6,9 @@ CREATE TABLE receipts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   image_url TEXT,
-  notes TEXT NOT NULL,
-  date DATE NOT NULL DEFAULT CURRENT_DATE
+  name TEXT NOT NULL,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  notes TEXT -- Optional notes/comments about the receipt
 );
 
 -- Bill items table (people who owe money)

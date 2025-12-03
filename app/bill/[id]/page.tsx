@@ -4,9 +4,70 @@ import { getPublicBill } from '@/app/actions/receipts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Receipt, Check } from 'lucide-react'
 import { formatDatePST } from '@/lib/date'
+import type { Metadata } from 'next'
 
 interface PublicBillPageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata(
+  { params }: PublicBillPageProps
+): Promise<Metadata> {
+  const { id } = await params
+  const receipt = await getPublicBill(id)
+  
+  if (!receipt) {
+    return {
+      title: 'Bill Not Found',
+      description: 'This bill could not be found.',
+    }
+  }
+
+  const title = receipt.name || 'Bill Split'
+  const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
+  const peopleCount = receipt.bill_items?.length || 0
+  const formattedDate = formatDatePST(receipt.date)
+  
+  const description = `${title} - $${totalAmount.toFixed(2)} split between ${peopleCount} ${peopleCount === 1 ? 'person' : 'people'} on ${formattedDate}`
+  
+  const metadata: Metadata = {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: `/bill/${id}`,
+      siteName: 'Receipt Split',
+      locale: 'en_US',
+    },
+    twitter: {
+      card: receipt.image_url ? 'summary_large_image' : 'summary',
+      title,
+      description,
+    },
+  }
+
+  // If there's a receipt image, add it to OpenGraph and Twitter cards
+  if (receipt.image_url) {
+    metadata.openGraph = {
+      ...metadata.openGraph,
+      images: [
+        {
+          url: receipt.image_url,
+          width: 1200,
+          height: 630,
+          alt: `Receipt for ${title}`,
+        }
+      ],
+    }
+    metadata.twitter = {
+      ...metadata.twitter,
+      images: [receipt.image_url],
+    }
+  }
+
+  return metadata
 }
 
 export default async function PublicBillPage({ params }: PublicBillPageProps) {
@@ -30,7 +91,7 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
             <span className="text-3xl">🧾</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-stone-800 to-stone-600 dark:from-stone-100 dark:to-stone-300 bg-clip-text text-transparent">
-            {receipt.notes || 'Bill Split'}
+            {receipt.name || 'Bill Split'}
           </h1>
           <p className="text-stone-500 dark:text-stone-400 mt-2">
             {formatDatePST(receipt.date)}

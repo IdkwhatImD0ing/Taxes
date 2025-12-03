@@ -22,6 +22,12 @@ AUTH_SECRET=your_jwt_secret_at_least_32_characters_long
 
 Run the SQL in `supabase-schema.sql` in your Supabase SQL Editor to create the tables.
 
+#### Migrations
+
+If you have an existing database, check the `migrations/` folder for any schema updates:
+
+- `001_add_notes_column.sql` - Adds a separate notes column and renames the original `notes` column to `name`
+
 ### 3. Supabase Storage
 
 1. Go to Supabase Dashboard → Storage
@@ -40,5 +46,23 @@ npm run dev
 1. Go to `/login` and enter your password
 2. Click "Create New Receipt" to upload a receipt image
 3. Add people and the amounts they owe
-4. Generate a public link to share with friends
-5. Friends can view the bill at `/bill/[id]` without needing to log in
+4. Add optional notes to keep track of additional details
+5. Generate a public link to share with friends
+6. Friends can view the bill at `/bill/[id]` without needing to log in
+
+## Bulk Import
+
+You can add multiple people at once using the Bulk Import feature on any receipt page. Either:
+- **Upload a JSON file** - Click "Upload JSON File" and select your file
+- **Paste JSON data** - Click "Paste JSON Data" and paste your JSON directly
+
+### Expected Format
+
+```json
+[
+  { "name": "John", "amount": 25.50 },
+  { "name": "Jane", "amount": 30.00 }
+]
+```
+
+**Flexible field names:** The importer also accepts `person_name` or `person` for names, and `value` or `total` for amounts.
