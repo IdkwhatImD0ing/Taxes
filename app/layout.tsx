@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ErrorBoundary } from "@/components/error-boundary";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://receiptsplit.app'),
   title: {
     default: "Receipt Split - Split Bills Easily",
     template: "%s | Receipt Split"
@@ -34,11 +36,21 @@ export const metadata: Metadata = {
     siteName: "Receipt Split",
     type: "website",
     locale: "en_US",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Receipt Split - Split Bills Easily",
+        type: "image/svg+xml",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Receipt Split - Split Bills Easily",
     description: "Split bills and track who owes what with Receipt Split.",
+    images: ["/og-image.svg"],
   },
   robots: {
     index: true,
@@ -51,6 +63,18 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#c4663a" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1512" },
+  ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.svg",
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
@@ -63,7 +87,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );

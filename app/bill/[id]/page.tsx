@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Receipt, Check, StickyNote } from 'lucide-react'
 import { formatDatePST } from '@/lib/date'
 import { CopyZelleButton } from './copy-zelle-button'
+import type { BillItem } from '@/lib/types'
 import type { Metadata } from 'next'
 
 interface PublicBillPageProps {
@@ -25,7 +26,7 @@ export async function generateMetadata(
   }
 
   const title = receipt.name || 'Bill Split'
-  const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
+  const totalAmount = receipt.bill_items?.reduce((sum: number, item: BillItem) => sum + item.amount, 0) || 0
   const peopleCount = receipt.bill_items?.length || 0
   const formattedDate = formatDatePST(receipt.date)
   
@@ -79,10 +80,47 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
     notFound()
   }
 
-  const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
+  const totalAmount = receipt.bill_items?.reduce((sum: number, item: BillItem) => sum + item.amount, 0) || 0
+  const receiptName = receipt.name || 'Bill Split'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://receiptsplit.app'
+
+  // JSON-LD structured data
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: receiptName,
+    description: `Bill split for ${receiptName} - $${totalAmount.toFixed(2)} total`,
+    url: `${baseUrl}/bill/${id}`,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Receipt Split',
+      url: baseUrl,
+    },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Receipt Split',
+          item: baseUrl,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: receiptName,
+          item: `${baseUrl}/bill/${id}`,
+        },
+      ],
+    },
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-brand-100/50 dark:from-background dark:via-brand-50/5 dark:to-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="absolute inset-0 bg-receipt-pattern" />
       
       <div className="relative z-10 container mx-auto py-8 px-4 max-w-2xl">
@@ -108,7 +146,7 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
             <CardContent>
               {receipt.bill_items && receipt.bill_items.length > 0 ? (
                 <div className="space-y-3">
-                  {receipt.bill_items.map((item: { id: string; person_name: string; amount: number; paid: boolean }) => (
+                  {receipt.bill_items.map((item: BillItem) => (
                     <div
                       key={item.id}
                       className={`flex items-center justify-between py-3.5 px-4 rounded-xl border transition-colors ${
@@ -219,7 +257,7 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
                 <div className="relative rounded-xl overflow-hidden bg-muted">
                   <Image
                     src={receipt.image_url}
-                    alt="Receipt"
+                    alt={`Receipt image for ${receiptName} - $${totalAmount.toFixed(2)} total`}
                     width={600}
                     height={800}
                     className="w-full h-auto max-h-[600px] object-contain"

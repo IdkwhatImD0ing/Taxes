@@ -12,9 +12,11 @@ import { DeleteBillItemButton } from './delete-bill-item-button'
 import { EditDate } from './edit-date'
 import { EditNotes } from './edit-notes'
 import { JsonUpload } from './json-upload'
+import { AIAnalysis } from './ai-analysis'
 import { TogglePaid } from './toggle-paid'
 import { UploadImage } from './upload-image'
 import { formatDatePST } from '@/lib/date'
+import type { BillItem } from '@/lib/types'
 import type { Metadata } from 'next'
 
 interface ReceiptPageProps {
@@ -29,7 +31,7 @@ export async function generateMetadata(
   try {
     const receipt = await getReceipt(id)
     const title = receipt.name || 'Receipt Details'
-    const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
+    const totalAmount = receipt.bill_items?.reduce((sum: number, item: BillItem) => sum + item.amount, 0) || 0
     const peopleCount = receipt.bill_items?.length || 0
     const formattedDate = formatDatePST(receipt.date)
     
@@ -61,7 +63,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
     notFound()
   }
 
-  const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
+  const totalAmount = receipt.bill_items?.reduce((sum: number, item: BillItem) => sum + item.amount, 0) || 0
   const publicLinkId = receipt.public_links?.[0]?.id
 
   return (
@@ -125,7 +127,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
                 
                 {receipt.bill_items && receipt.bill_items.length > 0 ? (
                   <div className="space-y-2 pt-4 border-t border-border">
-                    {receipt.bill_items.map((item: { id: string; person_name: string; amount: number; paid: boolean }) => (
+                    {receipt.bill_items.map((item: BillItem) => (
                       <div
                         key={item.id}
                         className={`flex items-center justify-between py-2.5 px-3 rounded-xl group transition-colors ${
@@ -174,6 +176,9 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
 
             {/* Notes */}
             <EditNotes receiptId={id} currentNotes={receipt.notes} />
+
+            {/* AI Analysis */}
+            <AIAnalysis receiptId={id} imageUrl={receipt.image_url} currentNotes={receipt.notes} />
 
             {/* JSON Upload */}
             <JsonUpload receiptId={id} />

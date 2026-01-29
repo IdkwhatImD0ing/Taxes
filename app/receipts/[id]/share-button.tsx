@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { generatePublicLink } from '@/app/actions/receipts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,10 +18,32 @@ export function ShareButton({ receiptId, existingLinkId }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   const publicUrl = linkId 
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/bill/${linkId}`
     : null
+
+  // Close dropdown
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false)
+    triggerRef.current?.focus()
+  }, [])
+
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!isOpen) return
+      
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeDropdown()
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, closeDropdown])
 
   // Close on click outside
   useEffect(() => {
@@ -62,9 +84,13 @@ export function ShareButton({ receiptId, existingLinkId }: ShareButtonProps) {
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
+        ref={triggerRef}
         variant="outline"
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        aria-label={linkId ? 'Share settings (shared)' : 'Share this receipt'}
         className={`gap-2 ${linkId ? 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300' : ''}`}
       >
         <Share2 className="w-4 h-4" />
@@ -72,11 +98,16 @@ export function ShareButton({ receiptId, existingLinkId }: ShareButtonProps) {
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 p-4 bg-white dark:bg-stone-900 rounded-xl shadow-2xl border border-stone-200 dark:border-stone-700 z-50">
+        <div 
+          role="dialog"
+          aria-label="Share bill"
+          className="absolute right-0 top-full mt-2 w-80 p-4 bg-white dark:bg-stone-900 rounded-xl shadow-2xl border border-stone-200 dark:border-stone-700 z-50"
+        >
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-stone-800 dark:text-stone-200">Share Bill</h3>
             <button 
-              onClick={() => setIsOpen(false)}
+              onClick={closeDropdown}
+              aria-label="Close share dialog"
               className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
             >
               <X className="w-4 h-4" />

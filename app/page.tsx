@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Receipt, ExternalLink, LogOut } from 'lucide-react'
 import { formatDateShortPST } from '@/lib/date'
+import type { BillItem } from '@/lib/types'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -67,7 +68,7 @@ export default async function Dashboard() {
         ) : (
           <div className="space-y-4">
             {receipts.map((receipt) => {
-              const totalAmount = receipt.bill_items?.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0) || 0
+              const totalAmount = receipt.bill_items?.reduce((sum: number, item: BillItem) => sum + item.amount, 0) || 0
               const peopleCount = receipt.bill_items?.length || 0
               const hasPublicLink = receipt.public_links && receipt.public_links.length > 0
 
