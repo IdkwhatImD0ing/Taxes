@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ErrorBoundary } from "@/components/error-boundary";
 import "./globals.css";
@@ -63,10 +63,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#c4663a" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1512" },
-  ],
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -75,6 +71,13 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.svg",
   },
   manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#c4663a" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1512" },
+  ],
 };
 
 export default function RootLayout({
