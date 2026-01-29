@@ -99,7 +99,8 @@ If items aren't clearly assigned to someone, split them evenly among all mention
           content: [
             {
               type: 'input_image',
-              image_url: imageUrl
+              image_url: imageUrl,
+              detail: 'auto'
             },
             {
               type: 'input_text',
