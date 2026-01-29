@@ -1,13 +1,31 @@
 // Client-side upload helper - uploads through our API proxy
+import imageCompression from 'browser-image-compression'
 
 export interface UploadResult {
   publicUrl: string
   path: string
 }
 
+async function compressImage(file: File): Promise<File> {
+  // Skip compression for non-image files or already small files
+  if (!file.type.startsWith('image/') || file.size < 1024 * 1024) {
+    return file
+  }
+
+  const options = {
+    maxSizeMB: 2,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+  }
+  return imageCompression(file, options)
+}
+
 export async function uploadImage(file: File): Promise<UploadResult> {
+  // Compress image before uploading
+  const compressedFile = await compressImage(file)
+
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('file', compressedFile)
 
   const response = await fetch('/api/upload', {
     method: 'POST',
