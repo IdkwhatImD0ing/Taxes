@@ -57,8 +57,6 @@ export async function generateMetadata(
       images: [
         {
           url: receipt.image_url,
-          width: 1200,
-          height: 630,
           alt: `Receipt for ${title}`,
         }
       ],

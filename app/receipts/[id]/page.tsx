@@ -8,12 +8,11 @@ import { ArrowLeft, Receipt } from 'lucide-react'
 import { AddBillItemForm } from './add-bill-item-form'
 import { ShareButton } from './share-button'
 import { DeleteReceiptButton } from './delete-receipt-button'
-import { DeleteBillItemButton } from './delete-bill-item-button'
+import { BillItemRow } from './bill-item-row'
 import { EditDate } from './edit-date'
 import { EditNotes } from './edit-notes'
 import { JsonUpload } from './json-upload'
 import { AIAnalysis } from './ai-analysis'
-import { TogglePaid } from './toggle-paid'
 import { UploadImage } from './upload-image'
 import { formatDatePST } from '@/lib/date'
 import type { BillItem } from '@/lib/types'
@@ -95,7 +94,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Receipt Image */}
-          <Card className="card-receipt overflow-hidden">
+          <Card className="card-receipt overflow-hidden lg:sticky lg:top-8 lg:self-start">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Receipt Image</CardTitle>
             </CardHeader>
@@ -128,35 +127,11 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
                 {receipt.bill_items && receipt.bill_items.length > 0 ? (
                   <div className="space-y-2 pt-4 border-t border-border">
                     {receipt.bill_items.map((item: BillItem) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-center justify-between py-2.5 px-3 rounded-xl group transition-colors ${
-                          item.paid 
-                            ? 'bg-success/10 dark:bg-success/5' 
-                            : 'bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <TogglePaid itemId={item.id} receiptId={id} paid={item.paid} />
-                          <span className={`font-medium ${
-                            item.paid 
-                              ? 'text-success line-through' 
-                              : 'text-foreground'
-                          }`}>
-                            {item.person_name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-lg font-semibold ${
-                            item.paid 
-                              ? 'text-success' 
-                              : 'text-foreground'
-                          }`}>
-                            ${item.amount.toFixed(2)}
-                          </span>
-                          <DeleteBillItemButton itemId={item.id} receiptId={id} />
-                        </div>
-                      </div>
+                      <BillItemRow 
+                        key={item.id} 
+                        item={item} 
+                        receiptId={id} 
+                      />
                     ))}
                     
                     <div className="flex items-center justify-between pt-4 border-t-2 border-brand-200/50 dark:border-brand-400/20">

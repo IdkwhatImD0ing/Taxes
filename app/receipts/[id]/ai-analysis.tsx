@@ -5,7 +5,8 @@ import { bulkAddBillItems, updateReceiptNotes } from '@/app/actions/receipts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Sparkles, ChevronDown, Check, Loader2, Trash2, Edit2, FileText } from 'lucide-react'
+import { Sparkles, ChevronDown, ChevronRight, Check, Loader2, Trash2, Edit2, FileText } from 'lucide-react'
+import type { BillItemBreakdown } from '@/lib/types'
 
 interface AIAnalysisProps {
   receiptId: string
@@ -16,6 +17,7 @@ interface AIAnalysisProps {
 interface BillItem {
   name: string
   amount: number
+  breakdown?: BillItemBreakdown
 }
 
 export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProps) {
@@ -31,6 +33,19 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editName, setEditName] = useState('')
   const [editAmount, setEditAmount] = useState('')
+  const [expandedBreakdowns, setExpandedBreakdowns] = useState<Set<number>>(new Set())
+
+  function toggleBreakdown(index: number) {
+    setExpandedBreakdowns(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+      return next
+    })
+  }
 
   async function handleAnalyze() {
     if (!imageUrl) {
@@ -63,7 +78,13 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
       }
 
       if (data.items && data.items.length > 0) {
-        setResults(data.items)
+        // Map API response to include breakdown data
+        const itemsWithBreakdown: BillItem[] = data.items.map((item: { name: string; amount: number; breakdown?: BillItemBreakdown }) => ({
+          name: item.name,
+          amount: item.amount,
+          breakdown: item.breakdown,
+        }))
+        setResults(itemsWithBreakdown)
         if (data.explanation) {
           setExplanation(data.explanation)
         }
@@ -84,7 +105,13 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
     setError(null)
 
     try {
-      const result = await bulkAddBillItems(receiptId, results)
+      // Include breakdown data when importing
+      const itemsWithBreakdown = results.map(item => ({
+        name: item.name,
+        amount: item.amount,
+        breakdown: item.breakdown,
+      }))
+      const result = await bulkAddBillItems(receiptId, itemsWithBreakdown)
 
       if (result.error) {
         setError(result.error)
@@ -219,64 +246,150 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
                 {results.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/80 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700"
+                    className="rounded-lg bg-white/80 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 overflow-hidden"
                   >
-                    {editingIndex === index ? (
-                      <div className="flex-1 flex items-center gap-2">
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="h-8 text-sm flex-1"
-                          placeholder="Name"
-                        />
-                        <Input
-                          value={editAmount}
-                          onChange={(e) => setEditAmount(e.target.value)}
-                          type="number"
-                          step="0.01"
-                          className="h-8 text-sm w-24"
-                          placeholder="Amount"
-                        />
-                        <Button size="sm" variant="ghost" onClick={saveEdit} className="h-8 px-2">
-                          <Check className="w-4 h-4 text-green-500" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-8 px-2">
-                          ✕
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <span 
-                          className="font-medium text-stone-700 dark:text-stone-200 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400"
-                          onClick={() => startEdit(index)}
-                        >
-                          {item.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span 
-                            className="text-lg font-semibold text-stone-800 dark:text-stone-100 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400"
-                            onClick={() => startEdit(index)}
-                          >
-                            ${item.amount.toFixed(2)}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => startEdit(index)}
-                            className="h-7 w-7 p-0 opacity-50 hover:opacity-100"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
+                    <div className="flex items-center justify-between py-2 px-3">
+                      {editingIndex === index ? (
+                        <div className="flex-1 flex items-center gap-2">
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="h-8 text-sm flex-1"
+                            placeholder="Name"
+                          />
+                          <Input
+                            value={editAmount}
+                            onChange={(e) => setEditAmount(e.target.value)}
+                            type="number"
+                            step="0.01"
+                            className="h-8 text-sm w-24"
+                            placeholder="Amount"
+                          />
+                          <Button size="sm" variant="ghost" onClick={saveEdit} className="h-8 px-2">
+                            <Check className="w-4 h-4 text-green-500" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeItem(index)}
-                            className="h-7 w-7 p-0 text-red-500 opacity-50 hover:opacity-100"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
+                          <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-8 px-2">
+                            ✕
                           </Button>
                         </div>
-                      </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => toggleBreakdown(index)}
+                              className="p-0.5 hover:bg-stone-200 dark:hover:bg-stone-700 rounded transition-colors"
+                            >
+                              {expandedBreakdowns.has(index) ? (
+                                <ChevronDown className="w-4 h-4 text-stone-500" />
+                              ) : (
+                                <ChevronRight className={`w-4 h-4 ${item.breakdown ? 'text-stone-500' : 'text-amber-500'}`} />
+                              )}
+                            </button>
+                            <span 
+                              className="font-medium text-stone-700 dark:text-stone-200 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400"
+                              onClick={() => startEdit(index)}
+                            >
+                              {item.name}
+                            </span>
+                            {!item.breakdown && (
+                              <span className="text-xs text-amber-500" title="Breakdown not available">⚠</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span 
+                              className="text-lg font-semibold text-stone-800 dark:text-stone-100 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400"
+                              onClick={() => startEdit(index)}
+                            >
+                              ${item.amount.toFixed(2)}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEdit(index)}
+                              className="h-7 w-7 p-0 opacity-50 hover:opacity-100"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeItem(index)}
+                              className="h-7 w-7 p-0 text-red-500 opacity-50 hover:opacity-100"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Breakdown dropdown */}
+                    {expandedBreakdowns.has(index) && (
+                      <div className="px-3 pb-3 pt-1 border-t border-stone-200 dark:border-stone-700 bg-stone-50/50 dark:bg-stone-900/50">
+                        {!item.breakdown ? (
+                          <p className="text-xs text-amber-600 dark:text-amber-400 py-1">
+                            Breakdown not available for this person. The AI may have calculated their total incorrectly.
+                          </p>
+                        ) : (
+                        <div className="space-y-2 text-xs">
+                          {/* Individual items */}
+                          {item.breakdown.items.length > 0 && (
+                            <div className="space-y-1">
+                              <span className="font-medium text-stone-500 dark:text-stone-400">Items:</span>
+                              {item.breakdown.items.map((breakdownItem, i) => (
+                                <div key={i} className="flex justify-between text-stone-600 dark:text-stone-300 pl-2">
+                                  <span>{breakdownItem.description}</span>
+                                  <span>${breakdownItem.amount.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Shared items */}
+                          {item.breakdown.shared_items && item.breakdown.shared_items.length > 0 && (
+                            <div className="space-y-1">
+                              <span className="font-medium text-stone-500 dark:text-stone-400">Shared:</span>
+                              {item.breakdown.shared_items.map((sharedItem, i) => (
+                                <div key={i} className="flex justify-between text-stone-600 dark:text-stone-300 pl-2">
+                                  <span>{sharedItem.description} (split with {sharedItem.split_with.join(', ')})</span>
+                                  <span>${sharedItem.amount.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Subtotal */}
+                          <div className="flex justify-between text-stone-600 dark:text-stone-300 pt-1 border-t border-stone-200 dark:border-stone-600">
+                            <span>Subtotal</span>
+                            <span>${item.breakdown.subtotal.toFixed(2)}</span>
+                          </div>
+                          
+                          {/* Tax share */}
+                          {item.breakdown.tax_share !== undefined && item.breakdown.tax_share > 0 && (
+                            <div className="flex justify-between text-stone-600 dark:text-stone-300">
+                              <span>Tax</span>
+                              <span>${item.breakdown.tax_share.toFixed(2)}</span>
+                            </div>
+                          )}
+                          
+                          {/* Fee share */}
+                          {item.breakdown.fee_share !== undefined && item.breakdown.fee_share > 0 && (
+                            <div className="flex justify-between text-stone-600 dark:text-stone-300">
+                              <span>Fees</span>
+                              <span>${item.breakdown.fee_share.toFixed(2)}</span>
+                            </div>
+                          )}
+                          
+                          {/* Tip share */}
+                          {item.breakdown.tip_share !== undefined && item.breakdown.tip_share > 0 && (
+                            <div className="flex justify-between text-stone-600 dark:text-stone-300">
+                              <span>Tip</span>
+                              <span>${item.breakdown.tip_share.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))}

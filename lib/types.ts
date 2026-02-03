@@ -1,10 +1,21 @@
 // Shared types for Receipt Split application
 
+// Breakdown of how a bill item total was calculated (from AI analysis)
+export interface BillItemBreakdown {
+  items: { description: string; amount: number }[]
+  subtotal: number
+  tax_share?: number
+  tip_share?: number
+  fee_share?: number  // Service fees, surcharges (e.g., Economic Recovery Fee)
+  shared_items?: { description: string; amount: number; split_with: string[] }[]
+}
+
 export interface BillItem {
   id: string
   person_name: string
   amount: number
   paid: boolean
+  breakdown?: BillItemBreakdown | null
 }
 
 export interface PublicLink {
@@ -33,5 +44,6 @@ export interface CreateReceiptInput {
 export interface BulkBillItemInput {
   name: string
   amount: number
+  breakdown?: BillItemBreakdown
 }
 

@@ -28,7 +28,7 @@ export function DeleteBillItemButton({ itemId, receiptId }: DeleteBillItemButton
       onClick={() => execute()}
       disabled={isLoading}
       aria-label="Delete bill item"
-      className="w-6 h-6 opacity-0 group-hover:opacity-100 text-stone-400 hover:text-red-500 transition-opacity"
+      className="w-6 h-6 text-stone-400 hover:text-red-500 transition-colors"
     >
       <X className="w-4 h-4" />
     </Button>

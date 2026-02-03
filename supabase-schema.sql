@@ -18,7 +18,9 @@ CREATE TABLE bill_items (
   person_name TEXT NOT NULL,
   amount DECIMAL(10, 2) NOT NULL,
   paid BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  breakdown JSONB -- Optional: stores itemized breakdown from AI analysis
+  -- breakdown structure: {items: [{description, amount}], subtotal, tax_share?, tip_share?, shared_items?: [{description, amount, split_with}]}
 );
 
 -- Public links table (for shareable URLs)
