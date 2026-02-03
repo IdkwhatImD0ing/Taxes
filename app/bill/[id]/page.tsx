@@ -2,9 +2,10 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { getPublicBill } from '@/app/actions/receipts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Receipt, Check, StickyNote } from 'lucide-react'
+import { Receipt, StickyNote } from 'lucide-react'
 import { formatDatePST } from '@/lib/date'
 import { CopyZelleButton } from './copy-zelle-button'
+import { BillItemDisplay } from './bill-item-display'
 import type { BillItem } from '@/lib/types'
 import type { Metadata } from 'next'
 
@@ -145,43 +146,7 @@ export default async function PublicBillPage({ params }: PublicBillPageProps) {
               {receipt.bill_items && receipt.bill_items.length > 0 ? (
                 <div className="space-y-3">
                   {receipt.bill_items.map((item: BillItem) => (
-                    <div
-                      key={item.id}
-                      className={`flex items-center justify-between py-3.5 px-4 rounded-xl border transition-colors ${
-                        item.paid
-                          ? 'bg-gradient-to-r from-success/10 to-success/5 border-success/20'
-                          : 'bg-gradient-to-r from-muted/50 to-brand-50/30 dark:from-muted/30 dark:to-brand-50/5 border-border/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {item.paid && (
-                          <div className="w-6 h-6 rounded-full bg-success flex items-center justify-center">
-                            <Check className="w-4 h-4 text-success-foreground" />
-                          </div>
-                        )}
-                        <span className={`font-medium text-lg ${
-                          item.paid 
-                            ? 'text-success line-through' 
-                            : 'text-foreground'
-                        }`}>
-                          {item.person_name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xl font-bold ${
-                          item.paid 
-                            ? 'text-success' 
-                            : 'text-brand-600 dark:text-brand-400'
-                        }`}>
-                          ${item.amount.toFixed(2)}
-                        </span>
-                        {item.paid && (
-                          <span className="text-xs font-medium text-success bg-success/15 px-2 py-0.5 rounded-full">
-                            PAID
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <BillItemDisplay key={item.id} item={item} />
                   ))}
                   
                   <div className="flex items-center justify-between pt-4 mt-4 border-t-2 border-brand-200/50 dark:border-brand-400/20">
