@@ -33,11 +33,6 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
   const [editAmount, setEditAmount] = useState('')
 
   async function handleAnalyze() {
-    if (!imageUrl) {
-      setError('Please upload a receipt image first')
-      return
-    }
-
     if (!prompt.trim()) {
       setError('Please enter who ordered what')
       return
@@ -147,11 +142,6 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
 
   const totalAmount = results?.reduce((sum, item) => sum + item.amount, 0) || 0
 
-  // Don't show the component if there's no image
-  if (!imageUrl) {
-    return null
-  }
-
   return (
     <div className="border border-violet-200/60 dark:border-violet-700/60 bg-gradient-to-br from-violet-50/60 to-white/60 dark:from-violet-950/20 dark:to-stone-900/60 rounded-xl overflow-hidden">
       {/* Collapsible Header */}
@@ -171,7 +161,10 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
       {isExpanded && (
         <div className="px-4 pb-4 space-y-3 border-t border-violet-200/60 dark:border-violet-700/60">
           <p className="text-xs text-stone-500 dark:text-stone-400 pt-3">
-            Describe who ordered what and AI will calculate what each person owes
+            {imageUrl 
+              ? 'Describe who ordered what and AI will analyze the receipt image to calculate what each person owes'
+              : 'No receipt image? No problem! Describe the items, prices, and who ordered what, and AI will calculate the split'
+            }
           </p>
 
           {/* Prompt Input */}
@@ -179,7 +172,10 @@ export function AIAnalysis({ receiptId, imageUrl, currentNotes }: AIAnalysisProp
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g., John had the burger ($15) and fries ($5). Jane had the Caesar salad ($12). We split the appetizer nachos ($10) and added 20% tip."
+              placeholder={imageUrl 
+                ? "e.g., John had the burger and fries. Jane had the Caesar salad. We split the appetizer nachos and added 20% tip."
+                : "e.g., John had the burger ($15) and fries ($5). Jane had the Caesar salad ($12). We split the appetizer nachos ($10). Tax was $3.50 and we added 20% tip."
+              }
               disabled={isAnalyzing || isImporting}
               className="w-full h-24 px-3 py-2 text-sm bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 disabled:opacity-50 placeholder:text-stone-400"
             />

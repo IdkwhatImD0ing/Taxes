@@ -56,38 +56,8 @@ const billSplitSchema = {
   strict: true
 }
 
-export async function POST(request: NextRequest) {
-  // Verify authentication
-  if (!(await verifyAuth(request))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) {
-    return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
-  }
-
-  try {
-    const { imageUrl, prompt } = await request.json()
-    
-    if (!imageUrl) {
-      return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
-    }
-
-    if (!prompt) {
-      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
-    }
-
-    const openai = new OpenAI({ apiKey })
-
-    // Use the Responses API with vision and structured outputs
-    const response = await openai.responses.create({
-      model: 'gpt-5.2',
-      reasoning: { effort: 'medium' },
-      input: [
-        {
-          role: 'system',
-          content: `You are a receipt analysis assistant that calculates how much each person owes for their items.
+// System prompt for image-based analysis
+const IMAGE_SYSTEM_PROMPT = `You are a receipt analysis assistant that calculates how much each person owes for their items.
 
 # Task
 Given a receipt image and a description of who ordered what items, calculate the total amount each person owes.
@@ -113,20 +83,92 @@ For each person, provide their name and total amount owed. Include a clear expla
 - Tax calculation breakdown
 - Tip calculation (if applicable)
 - Final totals`
+
+// System prompt for text-only analysis (no image)
+const TEXT_ONLY_SYSTEM_PROMPT = `You are a bill splitting assistant that calculates how much each person owes based on a text description.
+
+# Task
+Given a description of a bill/receipt and who ordered what items, calculate the total amount each person owes.
+
+# Instructions
+1. Extract all items and their prices from the user's description
+2. Match each item to the person who ordered it
+3. Calculate each person's subtotal (sum of their item prices)
+4. Apply tax proportionally if mentioned: (person's subtotal / total subtotal) × total tax
+5. Apply tip proportionally if mentioned: (person's subtotal / total subtotal) × total tip
+6. Final amount = person's subtotal + their share of tax + their share of tip
+
+# Rules
+- Only include people explicitly mentioned in the description
+- Each person pays ONLY for items assigned to them
+- Shared items: split the item cost equally among the people sharing it
+- Round all final amounts to 2 decimal places
+- If prices are missing for some items, make reasonable assumptions and note them
+
+# Output
+For each person, provide their name and total amount owed. Include a clear explanation showing:
+- Each person's items and subtotal
+- Tax calculation breakdown (if applicable)
+- Tip calculation (if applicable)
+- Any assumptions made
+- Final totals`
+
+export async function POST(request: NextRequest) {
+  // Verify authentication
+  if (!(await verifyAuth(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+  }
+
+  try {
+    const { imageUrl, prompt } = await request.json()
+    
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
+    }
+
+    const openai = new OpenAI({ apiKey })
+
+    // Build the request based on whether we have an image or not
+    const hasImage = !!imageUrl
+    const systemPrompt = hasImage ? IMAGE_SYSTEM_PROMPT : TEXT_ONLY_SYSTEM_PROMPT
+
+    // User content varies based on image presence
+    const userContent = hasImage
+      ? [
+          {
+            type: 'input_image' as const,
+            image_url: imageUrl,
+            detail: 'auto' as const
+          },
+          {
+            type: 'input_text' as const,
+            text: prompt
+          }
+        ]
+      : [
+          {
+            type: 'input_text' as const,
+            text: prompt
+          }
+        ]
+
+    // Use the Responses API with structured outputs
+    const response = await openai.responses.create({
+      model: 'gpt-5.2',
+      reasoning: { effort: 'medium' },
+      input: [
+        {
+          role: 'system',
+          content: systemPrompt
         },
         {
           role: 'user',
-          content: [
-            {
-              type: 'input_image',
-              image_url: imageUrl,
-              detail: 'auto'
-            },
-            {
-              type: 'input_text',
-              text: prompt
-            }
-          ]
+          content: userContent
         }
       ],
       text: {

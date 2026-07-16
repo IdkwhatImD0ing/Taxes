@@ -97,7 +97,17 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
           {/* Receipt Image */}
           <Card className="card-receipt overflow-hidden">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Receipt Image</CardTitle>
+              <CardTitle className="text-lg">
+                {receipt.image_url ? 'Receipt Image' : 'Receipt Image'}
+                {!receipt.image_url && (
+                  <span className="text-sm font-normal text-muted-foreground ml-2">(optional)</span>
+                )}
+              </CardTitle>
+              {!receipt.image_url && (
+                <CardDescription>
+                  You can add a receipt image later, or use AI analysis without one
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className="space-y-3">
               {receipt.image_url && (

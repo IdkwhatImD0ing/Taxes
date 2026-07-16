@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+There is a docs folder in the root of this project. Always refer to the docs when implementing new features or modifying existing features. Always modify the docs after implementing new features or modifying existing features. 
