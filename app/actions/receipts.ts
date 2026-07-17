@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { isAuthenticated } from '@/lib/auth'
+import type { BillItemBreakdown } from '@/lib/types'
 
 // Helper to ensure user is authenticated for all actions
 async function requireAuth() {
@@ -20,7 +21,7 @@ export async function getReceipts() {
     .from('receipts')
     .select(`
       *,
-      bill_items (id, person_name, amount, paid),
+      bill_items (id, person_name, amount, paid, breakdown),
       public_links (id)
     `)
     .order('date', { ascending: false })
@@ -37,7 +38,7 @@ export async function getReceipt(id: string) {
     .from('receipts')
     .select(`
       *,
-      bill_items (id, person_name, amount, paid),
+      bill_items (id, person_name, amount, paid, breakdown),
       public_links (id)
     `)
     .eq('id', id)
@@ -226,7 +227,7 @@ export async function updateReceiptNotes(receiptId: string, notes: string) {
 
 export async function bulkAddBillItems(
   receiptId: string, 
-  items: { name: string; amount: number }[]
+  items: { name: string; amount: number; breakdown?: BillItemBreakdown }[]
 ) {
   await requireAuth()
   
@@ -240,6 +241,7 @@ export async function bulkAddBillItems(
     receipt_id: receiptId,
     person_name: item.name,
     amount: item.amount,
+    breakdown: item.breakdown || null,
   }))
 
   const { error } = await supabase
@@ -303,7 +305,7 @@ export async function getPublicBill(linkId: string) {
     .from('receipts')
     .select(`
       *,
-      bill_items (id, person_name, amount, paid)
+      bill_items (id, person_name, amount, paid, breakdown)
     `)
     .eq('id', link.receipt_id)
     .single()

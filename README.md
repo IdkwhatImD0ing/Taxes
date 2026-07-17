@@ -16,6 +16,9 @@ SUPABASE_SECRET_KEY=your_supabase_secret_key
 # Auth
 AUTH_PASSWORD=your_secure_password
 AUTH_SECRET=your_jwt_secret_at_least_32_characters_long
+
+# OpenAI (optional, for AI Analysis feature)
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 ### 2. Supabase Database
@@ -27,6 +30,7 @@ Run the SQL in `supabase-schema.sql` in your Supabase SQL Editor to create the t
 If you have an existing database, check the `migrations/` folder for any schema updates:
 
 - `001_add_notes_column.sql` - Adds a separate notes column and renames the original `notes` column to `name`
+- `002_add_breakdown_column.sql` - Adds a `breakdown` JSONB column to bill_items for storing itemized cost breakdowns from AI analysis
 
 ### 3. Supabase Storage
 
@@ -49,6 +53,27 @@ npm run dev
 4. Add optional notes to keep track of additional details
 5. Generate a public link to share with friends
 6. Friends can view the bill at `/bill/[id]` without needing to log in
+
+## AI Analysis
+
+The AI Analysis feature (Beta) can automatically calculate how much each person owes based on a receipt image and your description of who ordered what.
+
+### How to Use
+
+1. Upload a receipt image to your receipt
+2. Expand the "AI Analysis" section
+3. Describe who ordered what (e.g., "John had the burger and fries. Jane had the salad. We split the appetizer.")
+4. Click "Analyze Receipt"
+5. Review the results - each person shows their total with an expandable breakdown
+6. Click the chevron next to each person to see:
+   - Individual items they ordered
+   - Shared items (split with others)
+   - Their subtotal, tax share, and tip share
+7. Edit any amounts if needed, then click "Import" to add everyone to the receipt
+
+The breakdown information is saved with each bill item, so you can always expand a person's row to see how their total was calculated.
+
+**Note:** Requires `OPENAI_API_KEY` environment variable to be set.
 
 ## Bulk Import
 
