@@ -97,7 +97,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
           <Card className="card-receipt overflow-hidden lg:sticky lg:top-8 lg:self-start">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">
-                {receipt.image_url ? 'Receipt Image' : 'Receipt Image'}
+                Receipt Image
                 {!receipt.image_url && (
                   <span className="text-sm font-normal text-muted-foreground ml-2">(optional)</span>
                 )}

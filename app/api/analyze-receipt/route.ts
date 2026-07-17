@@ -190,21 +190,49 @@ Given a description of a bill/receipt and who ordered what items, calculate the 
 2. Match each item to the person who ordered it
 3. Calculate each person's subtotal (sum of their item prices)
 4. Apply tax proportionally if mentioned: (person's subtotal / total subtotal) × total tax
-5. Apply tip proportionally if mentioned: (person's subtotal / total subtotal) × total tip
-6. Final amount = person's subtotal + their share of tax + their share of tip
+5. Apply fees proportionally if mentioned: (person's subtotal / total subtotal) × total fees
+6. Apply tip proportionally if mentioned: (person's subtotal / total subtotal) × total tip
+7. Final amount = person's subtotal + tax share + fee share + tip share
+
+# Handling Service Fees and Surcharges
+- Look for ANY fees or surcharges mentioned in the description (e.g., "Service Charge", "Living Wage Fee", percentage-based fees like "4% service fee")
+- These fees are distributed proportionally among all people, just like tax
+- Fee share = (person's subtotal / total subtotal) × total fees
+- Set fee_share to 0 if no fees are mentioned
+
+# Tip Detection (IMPORTANT)
+- Check the description for tip mentions (e.g., "added 18% tip", "20% gratuity", "we tipped 15%")
+- If a tip percentage is given, calculate: tip = percentage × total subtotal
+- Apply any tip proportionally to all people
+- Only set tip_share to 0 if there is genuinely no tip mentioned
 
 # Rules
 - Only include people explicitly mentioned in the description
 - Each person pays ONLY for items assigned to them
-- Shared items: split the item cost equally among the people sharing it
 - Round all final amounts to 2 decimal places
-- If prices are missing for some items, make reasonable assumptions and note them
+- If prices are missing for some items, make reasonable assumptions and note them in the explanation
+
+# Item Categorization (IMPORTANT - NO DUPLICATES)
+- The "items" array is ONLY for items this person ordered exclusively for themselves (not shared)
+- The "shared_items" array is ONLY for items that were split with others
+- If an item is shared/split, put it ONLY in shared_items, NOT in items
+- Do NOT duplicate any item between the two arrays
+- Each item should appear in exactly ONE array, never both
+- For shared items, record this person's share of the cost, split equally among the people sharing it
+- Subtotal = sum of (items amounts) + sum of (shared_items amounts)
+
+# CRITICAL: Complete Data for Every Person
+- EVERY person must have a complete breakdown with: items, subtotal, tax_share, fee_share, tip_share, shared_items
+- EVERY person's total amount MUST equal: subtotal + tax_share + fee_share + tip_share
+- Do NOT omit any person's breakdown - all people must have the same complete data structure
+- Double-check that each person's amount matches their breakdown sum before returning
 
 # Output
 For each person, provide their name and total amount owed. Include a clear explanation showing:
 - Each person's items and subtotal
 - Tax calculation breakdown (if applicable)
-- Tip calculation (if applicable)
+- Fee calculation breakdown (if applicable)
+- Tip calculation breakdown (if applicable)
 - Any assumptions made
 - Final totals`
 
